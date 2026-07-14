@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, status
+from pydantic import BaseModel, Field
 
 # 1.create an instance of FastAPI
 app = FastAPI()
@@ -6,10 +7,14 @@ app = FastAPI()
 # 2. create in memory database to store tasks
 
 tasks = [
-    {'id': 1, 'title': 'Task 1', 'description': 'This is task 1', 'completed': False},
-    {'id': 2, 'title': 'Task 2', 'description': 'This is task 2', 'completed': False}, 
-    {'id': 3, 'title': 'Task 3', 'description': 'This is task 3', 'completed': False}
+    {'id': 1, 'title': 'University Studies',  'completed': False},
+    {'id': 2, 'title': 'Data Analysis Course ',  'completed': False}, 
+    {'id': 3, 'title': 'Tableau Project', 'completed': False}
 ]
+
+# 3. create a Pydantic model for task creation
+class Task(BaseModel):
+    title: str
 
 # route (GET /)
 @app.get("/")
@@ -45,3 +50,34 @@ def get_specific_task(task_id: int ):
     raise HTTPException(
         status_code=404,
           detail="Task not found")
+
+
+#  stage 3 endpoints: create a new task
+
+# route (POST /tasks) : create a new task
+@app.post("/tasks", status_code=status.HTTP_201_CREATED)
+def create_task(task_data: Task):
+
+    # validate the title is not empty or whitespace
+    clean_title = task_data.title.strip()
+    if not clean_title:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Title cannot be empty or whitespace"
+        )
+    
+    # create a new task with a unique id
+    # the last task id in the list + 1
+    new_task_id = tasks[-1]['id'] + 1 if tasks else 1
+
+    # prepare the new task dictionary
+    new_task = {
+        'id': new_task_id,
+        'title': clean_title,
+        'completed': False
+    }
+
+    # add the new task to the tasks list
+    tasks.append(new_task)
+#  return the new task as a response
+    return new_task
