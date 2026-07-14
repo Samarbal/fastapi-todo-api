@@ -16,6 +16,16 @@ tasks = [
 class Task(BaseModel):
     title: str
 
+
+#  4. validation  for the edit tasks, 
+#  expect to recieve the title and completed status in the request body
+class TaskUpdate(BaseModel):
+    title: str 
+    completed: bool
+
+
+# stage 1 endpoints: root and health check
+
 # route (GET /)
 @app.get("/")
 def get_root():
@@ -48,8 +58,8 @@ def get_specific_task(task_id: int ):
     # return {"error": "Task not found"}
 
     raise HTTPException(
-        status_code=404,
-          detail="Task not found")
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Task not found")
 
 
 #  stage 3 endpoints: create a new task
@@ -81,3 +91,41 @@ def create_task(task_data: Task):
     tasks.append(new_task)
 #  return the new task as a response
     return new_task
+
+
+# Stage 4 endpoints: update and delete 
+
+# edit rout (PUT /tasks/{task_id}) : update a specific task by id
+@app.put("/tasks/{task_id}")
+def update_task(task_id : int, task_data: TaskUpdate):
+    clean_title = task_data.title.strip()
+    if not clean_title:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Title cannot be empty or whitespace"
+        )
+#  search for the task to edit by id in the tasks list
+    for task in tasks:
+        if task['id'] == task_id:
+            # update the task with new data
+            task['title'] = clean_title
+            task['completed'] = task_data.completed
+            return task   # 200 by default 
+        
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Task not found"
+    )
+
+
+#  delete route (DELETE /tasks/{task_id}) : delete a specific task by id
+@app.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_task(task_id: int):
+    for index, task in enumerate(tasks):
+        if task['id'] == task_id:
+            tasks.pop(index)
+            return  # 204 No Content
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=f"Task {task_id }not found"
+    )
