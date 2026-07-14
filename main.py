@@ -27,7 +27,7 @@ class TaskUpdate(BaseModel):
 # stage 1 endpoints: root and health check
 
 # route (GET /)
-@app.get("/")
+@app.get("/", description="Get metadata and description of the Task API.")
 def get_root():
     return {
         "name": "Task API",
@@ -36,7 +36,7 @@ def get_root():
     }
 
 #  health check route (GET /health)
-@app.get("/health")
+@app.get("/health", description="Check if the server is healthy and alive.")
 def get_health():
     return {
         "status": "ok"
@@ -45,12 +45,12 @@ def get_health():
 #   Stage 2 endpoints: read tasks 
 
 # route (GET /tasks) : get all tasks list 
-@app.get("/tasks")
+@app.get("/tasks", description="Get a list of all tasks.")
 def get_tasks():
     return tasks
 
 # route (GET /tasks/{task_id}) : get a specific task by id
-@app.get("/tasks/{task_id}")
+@app.get("/tasks/{task_id}", description="Get a specific task by its ID.")
 def get_specific_task(task_id: int ):
     for task in tasks:
         if task['id'] == task_id:
@@ -65,7 +65,7 @@ def get_specific_task(task_id: int ):
 #  stage 3 endpoints: create a new task
 
 # route (POST /tasks) : create a new task
-@app.post("/tasks", status_code=status.HTTP_201_CREATED)
+@app.post("/tasks", status_code=status.HTTP_201_CREATED, description="Create a new task. Title is validated to prevent empty inputs.")
 def create_task(task_data: Task):
 
     # validate the title is not empty or whitespace
@@ -96,7 +96,7 @@ def create_task(task_data: Task):
 # Stage 4 endpoints: update and delete 
 
 # edit rout (PUT /tasks/{task_id}) : update a specific task by id
-@app.put("/tasks/{task_id}")
+@app.put("/tasks/{task_id}", description="Update the title or done status of an existing task by its ID.")
 def update_task(task_id : int, task_data: TaskUpdate):
     clean_title = task_data.title.strip()
     if not clean_title:
@@ -119,7 +119,7 @@ def update_task(task_id : int, task_data: TaskUpdate):
 
 
 #  delete route (DELETE /tasks/{task_id}) : delete a specific task by id
-@app.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+@app.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT,description="Delete a task from the list using its unique ID.")
 def delete_task(task_id: int):
     for index, task in enumerate(tasks):
         if task['id'] == task_id:
