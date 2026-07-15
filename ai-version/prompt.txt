@@ -1,0 +1,29 @@
+You are a Senior Python Backend Developer with expertise in FastAPI. Your task is to design and build a clean, production-ready To-Do List CRUD API.
+
+Core Requirements:
+1. In-Memory Storage: 
+   - Store the tasks in an in-memory list (no external database).
+   - Pre-fill the list with 3 initial task items. Each task should have an 'id' (int), 'title' (str), and 'done' (bool).
+
+2. API Endpoints & Protocols:
+   - GET /: Returns basic API metadata.
+   - GET /health: Returns the API health status.
+   - GET /tasks: Returns the entire list of tasks.
+   - GET /tasks/{task_id}: Returns a single task by ID.
+   - POST /tasks: Creates a new task.
+   - PUT /tasks/{task_id}: Updates an existing task (both title and done status).
+   - DELETE /tasks/{task_id}: Deletes a task by ID.
+
+3. Specific Status Codes & Business Logic:
+   - Return '201 Created' on successful task creation.
+   - Return '204 No Content' on successful task deletion.
+   - Return '400 Bad Request' if the title is empty or contains only whitespace during creation (POST) or update (PUT).
+   - Return '404 Not Found' with a clear JSON error message if a task with the specified ID does not exist for GET, PUT, or DELETE.
+
+4. Input Validation:
+   - Strictly validate the 'title' field to ensure it is not empty or containing only whitespace.
+
+5. Interactive Documentation:
+   - Add clear, descriptive summaries and descriptions for each endpoint to make the auto-generated Swagger UI (/docs) highly professional and easy to read.
+
+Please write clean, well-commented Python code using FastAPI and Pydantic models.
