@@ -70,5 +70,41 @@ Interactive Swagger docs: http://localhost:8000/docs
 Alternative Redoc: http://localhost:8000/redoc
 
 
+--- 
+
+
+
+## AI vs Me (Stage 7)
+
+### The Prompt & Screenshot
+* **Prompt File:** The full specification prompt used can be found in `ai-version/prompt.txt`.
+* **AI Swagger UI:** A screenshot testing the AI version is saved in `ai-version/ai-swagger-screenshot.png`.
+
+ <img width="1297" height="655" alt="image" src="https://github.com/user-attachments/assets/a608869d-8b88-4863-a22d-9020f4bd2116" />
+
+---
+
+### Code Review (AI vs Me)
+
+#### 1. What did the AI do better?
+* **Model-Level Validation:** Used `@field_validator` inside Pydantic models (`TaskCreate`/`TaskUpdate`) instead of doing manual `.strip()` inside the routes.
+* **Custom Exception Handler:** Overrode FastAPI's default `422` validation error to return a custom `400 Bad Request` dynamically.
+* **Safer ID Generation:** Calculated IDs using `max(..., default=0) + 1`, which is safer than my list indexing approach (`tasks[-1]`) if the list becomes empty.
+
+#### 2. What did the AI get wrong or ignore?
+* **Redundant Response:** Returned `Response(status_code=204)` manually in the `DELETE` endpoint, which is redundant when already defined in the decorator.
+
+#### 3. What did my prompt forget to specify?
+* **In-Memory Types:** I didn't specify whether the list should hold raw dictionaries or strict Pydantic objects. The AI opinionatedly chose `List[Task]`.
+
+---
+
+### Rematch Result
+The AI code ran flawlessly on port `8001` on the first try and passed all validation checkups. No rematch prompt was needed.
+
+
+
+
+
 
    
