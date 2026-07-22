@@ -4,6 +4,9 @@ from pydantic import BaseModel, Field
 from sqlmodel import Field, SQLModel, create_engine, Session, select 
 from typing import Optional, List 
 
+# ORM (Object relational mapper ): converts python classes to tables in the data base 
+
+
 
 #  Define database schema --> tasks table 
 class Task(SQLModel, table= True):
@@ -36,15 +39,16 @@ def create_db_and_tables():
     #  if the table is empty , we add these 3tasks 
     with Session(engine) as session: 
         statement = select(Task)
-        existing_tasks = session.exec(statement).all 
+        results = session.exec(statement).first()
 
-        if not existing_tasks:
-            initial_tasks = [
-                Task(title="Buy groceries", done=False),
-                Task(title="Finish FastAPI assignment", done=False),
-                Task(title="Read a programming book", done=True)
-            ]
-            session.add_all(initial_tasks)
+        if results is None :
+            task1 = Task(title="Buy groceries", done=False)
+            task2 = Task(title="Finish FastAPI assignment", done=False)
+            task3 = Task(title="Read a programming book", done=True)
+            
+            session.add(task1)
+            session.add(task2)
+            session.add(task3)
             session.commit()
 
 
@@ -100,22 +104,31 @@ def get_health():
 
 #   Stage 2 endpoints: read tasks 
 
-# route (GET /tasks) : get all tasks list 
-@app.get("/tasks", description="Get a list of all tasks.")
+# route (GET /tasks) : get all tasks list from database 
+@app.get("/tasks",response_model=List[Task], description="Get a list of all tasks.")
 def get_tasks():
-    return tasks
+    with Session(engine) as session :
+        # SELECT * FROM tasks
+        statement = select(Task)
+        tasks = session.exec(statement).all()
+        return tasks
 
-# route (GET /tasks/{task_id}) : get a specific task by id
+# route (GET /tasks/{task_id}) : get a specific task by id from database 
 @app.get("/tasks/{task_id}", description="Get a specific task by its ID.")
 def get_specific_task(task_id: int ):
-    for task in tasks:
-        if task['id'] == task_id:
-            return task
-    # return {"error": "Task not found"}
+    with Session(engine) as session:
+        # search in db by id
+        task = session.get(Task, task_id)
 
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="Task not found")
+        if not task:
+            raise HTTPException(
+                status_code= status.HTTP_404_NOT_FOUND, 
+                detail=f"Task {task_id} not found"
+            )
+
+        return task
+
+
 
 
 #  stage 3 endpoints: create a new task
