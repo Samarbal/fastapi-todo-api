@@ -1,27 +1,83 @@
 from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel, Field
 
+from sqlmodel import Field, SQLModel, create_engine, Session, select 
+from typing import Optional, List 
+
+
+#  Define database schema --> tasks table 
+class Task(SQLModel, table= True):
+    id:Optional[int] = Field(default = None, primary_key= True)
+    title: str
+    done:bool =  False
+
+# classes ro check api model (pydantic models )
+class TaskCreate(BaseModel):
+    title:str
+
+class TaskUpdate(BaseModel):
+    title: str
+    done: bool 
+
+
+#  connect with database : SQLite  , and will create a database file 
+sqlite_file_name= 'tasks.db'
+sqlite_url =f'sqlite:///{sqlite_file_name}'
+
+# connect arguments (nessary with fastapi with sqlite )
+engine = create_engine(sqlite_url, connect_args = {"check_same_thread": False})
+
+#  function to create the table and initial data when the server starts.
+
+def create_db_and_tables():
+    # create table if not exist 
+    SQLModel.metadata.create_all(engine)
+
+    #  if the table is empty , we add these 3tasks 
+    with Session(engine) as session: 
+        statement = select(Task)
+        existing_tasks = session.exec(statement).all 
+
+        if not existing_tasks:
+            initial_tasks = [
+                Task(title="Buy groceries", done=False),
+                Task(title="Finish FastAPI assignment", done=False),
+                Task(title="Read a programming book", done=True)
+            ]
+            session.add_all(initial_tasks)
+            session.commit()
+
+
+# FastAPI application with initialization function triggered at startup (Lifespan event)
+
+app = FastAPI(title="To-Do List API with SQLite")
+
+@app.on_event("startup")
+def on_startup():
+    create_db_and_tables()
+
+
 # 1.create an instance of FastAPI
-app = FastAPI()
+# app = FastAPI()
 
 # 2. create in memory database to store tasks
 
-tasks = [
-    {'id': 1, 'title': 'University Studies',  'completed': False},
-    {'id': 2, 'title': 'Data Analysis Course ',  'completed': False}, 
-    {'id': 3, 'title': 'Tableau Project', 'completed': False}
-]
+# tasks = [
+#     {'id': 1, 'title': 'University Studies',  'completed': False},
+#     {'id': 2, 'title': 'Data Analysis Course ',  'completed': False}, 
+#     {'id': 3, 'title': 'Tableau Project', 'completed': False}
+# ]
 
 # 3. create a Pydantic model for task creation
-class Task(BaseModel):
-    title: str
+# class Task(BaseModel):
+#     title: str
 
 
 #  4. validation  for the edit tasks, 
 #  expect to recieve the title and completed status in the request body
-class TaskUpdate(BaseModel):
-    title: str 
-    completed: bool
+# class TaskUpdate(BaseModel):
+#     title: str 
+#     completed: bool
 
 
 # stage 1 endpoints: root and health check
