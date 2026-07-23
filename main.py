@@ -132,6 +132,7 @@ def get_specific_task(task_id: int ):
 
 
 #  stage 3 endpoints: create a new task
+#  and store in database 
 
 # route (POST /tasks) : create a new task
 @app.post("/tasks", 
@@ -172,37 +173,79 @@ def create_task(task_data: TaskCreate):
 
 # Stage 4 endpoints: update and delete 
 
+# update and delete in the database 
+
 # edit rout (PUT /tasks/{task_id}) : update a specific task by id
-@app.put("/tasks/{task_id}", description="Update the title or done status of an existing task by its ID.")
-def update_task(task_id : int, task_data: TaskUpdate):
-    clean_title = task_data.title.strip()
-    if not clean_title:
+@app.put("/tasks/{task_id}",
+         response_model=Task, 
+          description="Update the title or done status of an existing task by its ID.")
+
+def update_task(task_id : int, updated_data: TaskUpdate):
+
+    # check clean data
+    if not updated_data.title or not updated_data.title.strip():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Title cannot be empty or whitespace"
+            detail="Task title cannot be empty or contain only whitespace"
         )
-#  search for the task to edit by id in the tasks list
-    for task in tasks:
-        if task['id'] == task_id:
-            # update the task with new data
-            task['title'] = clean_title
-            task['completed'] = task_data.completed
-            return task   # 200 by default 
+
+    with Session(engine) as session:
+        # search for the task on the databse 
+        task = session.get(Task, task_id)
+
+        if not task:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Task {task_id} not found")
+
+        # update the values 
+        task.title = updated_data.title.strip()
+        task.done = updated_data.done
+
+        # save the edited in the databse 
+        session.add(task)
+        session.commit()
+        session.refresh(task)
+
+        return task 
+
+            
+
+
+# #  search for the task to edit by id in the tasks list
+#     for task in tasks:
+#         if task['id'] == task_id:
+#             # update the task with new data
+#             task['title'] = clean_title
+#             task['completed'] = task_data.completed
+#             return task   # 200 by default 
         
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="Task not found"
-    )
+#     raise HTTPException(
+#         status_code=status.HTTP_404_NOT_FOUND,
+#         detail="Task not found"
+#     )
 
 
-#  delete route (DELETE /tasks/{task_id}) : delete a specific task by id
-@app.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT,description="Delete a task from the list using its unique ID.")
+
+#  delete route (DELETE /tasks/{task_id}) : delete a specific task by id in the databses 
+@app.delete("/tasks/{task_id}",
+             status_code=status.HTTP_204_NO_CONTENT,
+             description="Delete a task from the list using its unique ID.")
+
+
 def delete_task(task_id: int):
-    for index, task in enumerate(tasks):
-        if task['id'] == task_id:
-            tasks.pop(index)
-            return  # 204 No Content
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Task {task_id }not found"
-    )
+    with Session(engine) as session:
+        #search for the task in the db 
+        task = session.get(Task, task_id)
+        if not task:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Task {task_id} not found"
+            )
+
+        #delete and commit 
+        session.delete(task)
+        session.commit()
+
+        return None
+
