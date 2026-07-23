@@ -134,30 +134,38 @@ def get_specific_task(task_id: int ):
 #  stage 3 endpoints: create a new task
 
 # route (POST /tasks) : create a new task
-@app.post("/tasks", status_code=status.HTTP_201_CREATED, description="Create a new task. Title is validated to prevent empty inputs.")
-def create_task(task_data: Task):
+@app.post("/tasks", 
+          status_code=status.HTTP_201_CREATED, 
+          description="Create a new task and persist it to the SQLite database.")
+def create_task(task_data: TaskCreate):
 
     # validate the title is not empty or whitespace
-    clean_title = task_data.title.strip()
-    if not clean_title:
+    if not task_data.title or not task_data.title.strip():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Title cannot be empty or whitespace"
+            detail="Task title cannot be empty or contain only whitespace"
         )
     
-    # create a new task with a unique id
-    # the last task id in the list + 1
-    new_task_id = tasks[-1]['id'] + 1 if tasks else 1
+    # create a new task with a unique id and add it to the database 
+    with Session(engine) as session: 
+        new_task = Task(title=task_data.title.strip(), done= False)
+
+        session.add(new_task)
+        session.commit()
+        session.refresh(new_task)
 
     # prepare the new task dictionary
-    new_task = {
-        'id': new_task_id,
-        'title': clean_title,
-        'completed': False
-    }
+    # new_task = {
+    #     'id': new_task_id,
+    #     'title': clean_title,
+    #     'completed': False
+    # }
 
-    # add the new task to the tasks list
-    tasks.append(new_task)
+    # # add the new task to the tasks list
+    # tasks.append(new_task)
+
+
+
 #  return the new task as a response
     return new_task
 
