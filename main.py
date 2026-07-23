@@ -36,6 +36,8 @@ def create_db_and_tables():
     # create table if not exist 
     SQLModel.metadata.create_all(engine)
 
+    __tablename__ = "tasks"
+
     #  if the table is empty , we add these 3tasks 
     with Session(engine) as session: 
         statement = select(Task)
