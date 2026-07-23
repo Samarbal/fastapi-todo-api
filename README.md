@@ -40,7 +40,8 @@ You can inspect and execute queries directly using any SQLite viewer (e.g., VS C
 **Example SQL Query Executed:**
 ```sql
 -- Retrieve all completed tasks
-SELECT * FROM tasks WHERE done = 1; ```
+SELECT * FROM tasks WHERE done = 1; 
+```
 
 
 
